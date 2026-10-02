@@ -87,7 +87,7 @@ function createPetWindow(config) {
     stopWalkTimer();
     currentConfig = config;
 
-    var cfg_scale = config.display_scale || 1.0;
+    var cfg_scale = Number(config.display_scale) || 1.0;
     var cfg_allowWalk = config.behavior_allow_walk !== false;
     var cfg_allowSit = config.behavior_allow_sit !== false;
     var cfg_allowSleep = config.behavior_allow_sleep !== false;
@@ -135,16 +135,18 @@ function createPetWindow(config) {
             var pngB64 = android.util.Base64.encodeToString(
                 files.readBytes(files.join(skinDir, pnF)), android.util.Base64.NO_WRAP);
 
-            var renderMix = config.render_animation_mixture || 0.3;
-            var walkSpd = config.behavior_walk_speed || 30;
+            var renderMix = Number(config.render_animation_mixture) || 0.3;
+            var walkSpd = Number(config.behavior_walk_speed) || 30;
             walkSpeed = walkSpd;
             var aiAct = config.behavior_ai_activation !== undefined ? config.behavior_ai_activation : 4;
-            var opacity = config.opacity !== undefined ? config.opacity : 1.0;
+            var opacity = Number(config.opacity); if (isNaN(opacity)) opacity = 1.0;
             var aiFactor = Math.max(0.2, 1 - aiAct / 16);
 
-            // 构建 JS 位置表达式
-            var posXExpr = (cfg_posX !== null && cfg_posX !== undefined) ? cfg_posX : "c.width/2";
-            var posYExpr = (cfg_posY !== null && cfg_posY !== undefined) ? cfg_posY : "c.height/5+c.height/20";
+            // 构建 JS 位置表达式（强制转换为数值，防止配置被篡改后注入任意 JS 代码）
+            var posXExpr = "c.width/2";
+            if (cfg_posX !== null && cfg_posX !== undefined) { var _nx = Number(cfg_posX); if (!isNaN(_nx)) posXExpr = _nx; }
+            var posYExpr = "c.height/5+c.height/20";
+            if (cfg_posY !== null && cfg_posY !== undefined) { var _ny = Number(cfg_posY); if (!isNaN(_ny)) posYExpr = _ny; }
 
             var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pet</title>';
             html += '<style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:transparent}#c{display:block;width:100%;height:100%}</style>';
