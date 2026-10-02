@@ -1,0 +1,22 @@
+# ===== 构建产物 =====
+build/
+*.apk
+*.apk.*
+
+# ===== 运行时生成 =====
+ui/config_loaded.html
+
+# ===== 每个模型的个人配置（存在模型文件夹内，不纳入版本管理）=====
+profile.json
+
+# ===== 下载的模型不入库，仅保留内置资源与图标 =====
+res/*
+!res/Ptilopsis/
+!res/logo.png
+!res/splashIcon.png
+!res/models_data.json
+
+# ===== 临时/备份文件 =====
+*.bak
+*.stash_save
+*.tmp

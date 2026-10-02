@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Spine Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: transparent;
+            touch-action: none;
+        }
+        #spine-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="spine-canvas"></canvas>
+    <script src="../libs/spine-webgl.js"></script>
+    <script>
+    (function() {
+        const CANVAS_BASE = 150;
+        const MOVING_SPEED = 30;
+
+        const ANIMATION_NAMES = ["Relax", "Interact", "Move", "Sit", "Sleep"];
+        const ANIMATION_MARKOV = [
+            [0.5, 0.0, 0.25, 0.15, 0.1],
+            [1.0, 0.0, 0.0, 0.0, 0.0],
+            [0.2, 0.0, 0.8, 0.0, 0.0],
+            [0.3, 0.0, 0.0, 0.7, 0.0],
+            [0.1, 0.0, 0.0, 0.0, 0.9],
+        ];
+        const ANIMATION_NAMES_VEHICLE = ["Relax", "Interact", "Move"];
+        const ANIMATION_MARKOV_VEHICLE = [
+            [0.5, 0.0, 0.5],
+            [1.0, 0.0, 0.0],
+            [0.3, 0.0, 0.7],
+        ];
+
+        let canvas, gl, shader, batcher, mvp, assetManager, skeletonRenderer;
+        let character = null;
+        let modelData = null;
+        let isVehicle = false;
+        let currentAction = { animation: "Relax", direction: "right", timestamp: 0 };
+        let lastFrameTime = 0;
+        let animationFrameId = null;
+        let userScale = 1.0;
+        let dpr = 2;
+
+        function init() {
+            canvas = document.getElementById('spine-canvas');
+            dpr = window.devicePixelRatio || 2;
+            resizeCanvas();
+
+            gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+            if (!gl) { console.error('WebGL not supported'); return; }
+
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+            shader = spine.webgl.Shader.newTwoColoredTextured(gl);
+            batcher = new spine.webgl.PolygonBatcher(gl);
+            skeletonRenderer = new spine.webgl.SkeletonRenderer(new spine.webgl.ManagedWebGLRenderingContext(gl));
+            assetManager = new spine.webgl.AssetManager(gl);
+
+            mvp = new spine.webgl.Matrix4();
+            mvp.ortho2d(0, 0, canvas.width, canvas.height);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+
+            if (window.injectData) {
+                loadModel(window.injectData);
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = CANVAS_BASE * dpr * userScale;
+            canvas.height = CANVAS_BASE * dpr * userScale;
+            canvas.style.width = (CANVAS_BASE * userScale) + 'px';
+            canvas.style.height = (CANVAS_BASE * userScale) + 'px';
+        }
+
+        function loadModel(data) {
+            modelData = data;
+            const resources = [data.skeleton, data.atlas, data.texture];
+            const basePath = data.resourcePath || '';
+
+            Promise.all(resources.map(async function(resource) {
+                const response = await fetch(basePath + encodeUriPath(resource));
+                const blob = await response.blob();
+                const reader = new FileReader();
+                return new Promise(function(resolve) {
+                    reader.onloadend = function() { resolve(reader.result); };
+                    reader.readAsDataURL(blob);
+                });
+            })).then(function(dataUrls) {
+                resources.forEach(function(resource, i) {
+                    assetManager.setRawDataURI(resource, dataUrls[i]);
+                });
+                assetManager.removeAll();
+                assetManager.loadBinary(data.skeleton, function() {
+                    assetManager.loadTextureAtlas(data.atlas, function() {
+                        resources.forEach(function(resource) {
+                            assetManager.setRawDataURI(resource, '');
+                        });
+                        onLoadComplete();
+                    });
+                });
+            }).catch(function(err) {
+                console.error('Failed to load model:', err);
+            });
+        }
+
+        function encodeUriPath(path) {
+            return encodeURIComponent(path).replace(/%2F/g, '/');
+        }
+
+        function onLoadCompleteWithKeys(skelKey, atlasKey) {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            if (assetManager.isLoadingComplete()) {
+                var atlas = assetManager.get(atlasKey);
+                if (!atlas) { console.error('Failed to load atlas'); return; }
+                var atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+                var skeletonBinary = new spine.SkeletonBinary(atlasLoader);
+                skeletonBinary.scale = 0.3 * 0.75 * dpr;
+                var skeletonData = skeletonBinary.readSkeletonData(assetManager.get(skelKey));
+                var skeleton = new spine.Skeleton(skeletonData);
+                isVehicle = false;
+                if (!skeletonData.findAnimation("Sit") || !skeletonData.findAnimation("Sleep")) { isVehicle = true; }
+                var animationStateData = new spine.AnimationStateData(skeleton.data);
+                getAnimationNames().forEach(function(fromAnim) {
+                    getAnimationNames().forEach(function(toAnim) {
+                        if (fromAnim !== toAnim) { animationStateData.setMix(fromAnim, toAnim, 0.3); }
+                    });
+                });
+                var animationState = new spine.AnimationState(animationStateData);
+                animationState.setAnimation(0, "Relax", true);
+                animationState.addListener({
+                    complete: function(entry) {
+                        var action = nextAction(currentAction);
+                        currentAction = action;
+                        animationState.setAnimation(0, action.animation, true);
+                    }
+                });
+                skeleton.x = canvas.width / 2;
+                skeleton.y = 0;
+                character = { skeleton: skeleton, state: animationState };
+                currentAction = { animation: "Relax", direction: "right", timestamp: 0 };
+                lastFrameTime = Date.now() / 1000;
+                animationFrameId = requestAnimationFrame(render);
+                if (window.onSpineReady) window.onSpineReady(getAnimationNames());
+                console.log("Spine character loaded successfully");
+            } else {
+                animationFrameId = requestAnimationFrame(function() { onLoadCompleteWithKeys(skelKey, atlasKey); });
+            }
+        }
+
+        function onLoadComplete() {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            if (assetManager.isLoadingComplete()) {
+                const atlas = assetManager.get(modelData.atlas);
+                const atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+                const skeletonBinary = new spine.SkeletonBinary(atlasLoader);
+                skeletonBinary.scale = 0.3 * 0.75 * dpr;
+
+                const skeletonData = skeletonBinary.readSkeletonData(assetManager.get(modelData.skeleton));
+                const skeleton = new spine.Skeleton(skeletonData);
+
+                isVehicle = false;
+                if (!skeletonData.findAnimation("Sit") || !skeletonData.findAnimation("Sleep")) {
+                    isVehicle = true;
+                }
+
+                const animationStateData = new spine.AnimationStateData(skeleton.data);
+                getAnimationNames().forEach(function(fromAnim) {
+                    getAnimationNames().forEach(function(toAnim) {
+                        if (fromAnim !== toAnim) {
+                            animationStateData.setMix(fromAnim, toAnim, 0.3);
+                        }
+                    });
+                });
+
+                const animationState = new spine.AnimationState(animationStateData);
+                animationState.setAnimation(0, "Relax", true);
+
+                animationState.addListener({
+                    complete: function(entry) {
+                        const action = nextAction(currentAction);
+                        currentAction = action;
+                        animationState.setAnimation(0, action.animation, true);
+                    }
+                });
+
+                skeleton.x = canvas.width / 2;
+                skeleton.y = 0;
+
+                character = { skeleton: skeleton, state: animationState };
+                currentAction = { animation: "Relax", direction: "right", timestamp: 0 };
+                lastFrameTime = Date.now() / 1000;
+
+                animationFrameId = requestAnimationFrame(render);
+
+                if (window.onSpineReady) window.onSpineReady(getAnimationNames());
+            } else {
+                animationFrameId = requestAnimationFrame(onLoadComplete);
+            }
+        }
+
+        function getAnimationNames() {
+            return isVehicle ? ANIMATION_NAMES_VEHICLE : ANIMATION_NAMES;
+        }
+
+        function getAnimationMarkov() {
+            return isVehicle ? ANIMATION_MARKOV_VEHICLE : ANIMATION_MARKOV;
+        }
+
+        function randomPick(probabilities) {
+            let random = Math.random();
+            let cumulativeProb = 0;
+            for (let i = 0; i < probabilities.length; i++) {
+                cumulativeProb += probabilities[i];
+                if (random <= cumulativeProb) return i;
+            }
+            return probabilities.length - 1;
+        }
+
+        function nextAction(current) {
+            const animeIndex = getAnimationNames().indexOf(current.animation);
+            const nextIndexProb = getAnimationMarkov()[animeIndex];
+            const nextAnimIndex = randomPick(nextIndexProb);
+            const nextAnim = getAnimationNames()[nextAnimIndex];
+
+            let nextDirection = current.direction;
+            if (current.animation === "Relax" && nextAnim === "Move") {
+                nextDirection = Math.random() < 0.4 ? (current.direction === "left" ? "right" : "left") : current.direction;
+            }
+            return { animation: nextAnim, direction: nextDirection, timestamp: 0 };
+        }
+
+        function render() {
+            const now = Date.now() / 1000;
+            const delta = Math.min(now - lastFrameTime, 0.1);
+            lastFrameTime = now;
+            currentAction.timestamp += delta;
+
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            if (character) {
+                character.skeleton.scaleX = currentAction.direction === "left" ? -1 : 1;
+                character.state.update(delta);
+                character.state.apply(character.skeleton);
+                character.skeleton.updateWorldTransform();
+
+                shader.bind();
+                shader.setUniformi(spine.webgl.Shader.SAMPLER, 0);
+                shader.setUniform4x4f(spine.webgl.Shader.MVP_MATRIX, mvp.values);
+                batcher.begin(shader);
+                skeletonRenderer.premultipliedAlpha = false;
+                skeletonRenderer.draw(batcher, character.skeleton);
+                batcher.end();
+                shader.unbind();
+            }
+
+            animationFrameId = requestAnimationFrame(render);
+        }
+
+        window.spineAPI = {
+            playAnimation: function(name) {
+                if (character && character.state) {
+                    currentAction = { animation: name, direction: currentAction.direction, timestamp: 0 };
+                    character.state.setAnimation(0, name, true);
+                }
+            },
+            getAnimationNames: function() {
+                return getAnimationNames();
+            },
+            setScale: function(s) {
+                userScale = s;
+                resizeCanvas();
+                if (gl && mvp) {
+                    mvp.ortho2d(0, 0, canvas.width, canvas.height);
+                    gl.viewport(0, 0, canvas.width, canvas.height);
+                }
+                if (character) {
+                    character.skeleton.x = canvas.width / 2;
+                }
+            },
+            setOpacity: function(o) {
+                if (canvas) canvas.style.opacity = o;
+            },
+            reload: function(data) {
+                if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+                character = null;
+                if (assetManager) {
+                    assetManager.removeAll();
+                }
+                loadModel(data);
+            },
+            destroy: function() {
+                if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+                character = null;
+                if (assetManager) {
+                    assetManager.removeAll();
+                    assetManager.dispose();
+                }
+            }
+        };
+
+        if (document.readyState === 'complete') {
+            init();
+        } else {
+            window.addEventListener('load', init);
+        }
+    })();
+    </script>
+</body>
+</html>
