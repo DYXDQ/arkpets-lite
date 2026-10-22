@@ -4140,8 +4140,8 @@ var spine;
 			var input = new BinaryInput(binary);
 			skeletonData.hash = input.readString();
 			skeletonData.version = input.readString();
-			if ("3.8.75" == skeletonData.version)
-				throw new Error("Unsupported skeleton data, please export with a newer version of Spine.");
+			//if ("3.8.75" == skeletonData.version)
+			//	throw new Error("Unsupported skeleton data, please export with a newer version of Spine.");
 			skeletonData.x = input.readFloat();
 			skeletonData.y = input.readFloat();
 			skeletonData.width = input.readFloat();
@@ -5552,8 +5552,8 @@ var spine;
 			if (skeletonMap != null) {
 				skeletonData.hash = skeletonMap.hash;
 				skeletonData.version = skeletonMap.spine;
-				if ("3.8.75" == skeletonData.version)
-					throw new Error("Unsupported skeleton data, please export with a newer version of Spine.");
+				//if ("3.8.75" == skeletonData.version)
+				//	throw new Error("Unsupported skeleton data, please export with a newer version of Spine.");
 				skeletonData.x = skeletonMap.x;
 				skeletonData.y = skeletonMap.y;
 				skeletonData.width = skeletonMap.width;
