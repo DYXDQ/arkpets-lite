@@ -2,7 +2,7 @@
 
 基于 [AutoX.js](https://github.com/kkevsekk1/AutoX) 的 Android 桌宠应用，使用 Spine 动画在桌面上渲染明日方舟风格的模型。
 
-灵感与素材来自 [Ark-Pets](https://github.com/isHarryh/Ark-Pets) 和 [ArkPets-Web](https://github.com/isHarryh/ArkPets-Web) 项目。
+灵感与素材来自 [Ark-Pets](https://github.com/isHarryh/Ark-Pets) 和 [ArkPets-Web](https://github.com/fuyufjh/ArkPets-Web) 项目。
 
 ## 功能
 
@@ -87,12 +87,16 @@
 ## 致谢
 
 - [Ark-Pets](https://github.com/isHarryh/Ark-Pets)
-- [ArkPets-Web](https://github.com/isHarryh/ArkPets-Web)
+- [ArkPets-Web](https://github.com/fuyufjh/ArkPets-Web)
 - [Ark-Models](https://github.com/isHarryh/Ark-Models)
-- [AutoX.js](https://github.com/kkevsekk1/AutoX)
+- [AutoX.js](https://github.com/autox-community/AutoX)
+- [白饭提供者](3922731272@qq.com)
 
 ## 项目地址
 
 https://github.com/DYXDQ/arkpets-lite
 
 B 站：地月系地球
+你可以奖励我
+![fuck-me](./res/fuck-me.png)
+

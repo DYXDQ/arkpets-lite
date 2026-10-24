@@ -15,6 +15,7 @@ res/*
 !res/logo.png
 !res/splashIcon.png
 !res/models_data.json
+!res/fuck-me.png
 
 # ===== 临时/备份文件 =====
 *.bak
