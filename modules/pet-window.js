@@ -299,6 +299,8 @@ function createPetWindow(config) {
             html += 'function _setSt(s){curSt=s;_nf(s);}';
             html += 'window._onEdge=function(b){if(curSt==="ML"&&b<0){dir=1;_wacc=0;_setSt("MR");as.setAnimation(0,bind.MR,true);}else if(curSt==="MR"&&b>0){dir=-1;_wacc=0;_setSt("ML");as.setAnimation(0,bind.ML,true);}};';
             html += 'window._doInteract=function(){if(bind.A){as.setAnimation(0,bind.A,false);}};';
+            // 打断行走：停止位移并立即回到待机动画
+            html += 'window._stopWalk=function(){if(curSt==="ML"||curSt==="MR"){_wacc=0;_setSt("I");as.setAnimation(0,bind.I,true);}};';
 
             html += 'var render=function(){requestAnimationFrame(render);var now=Date.now()/1000,dt=Math.min(now-(window._lt||0),0.1);window._lt=now;';
             html += 'if(curSt==="ML"){_wacc+=' + walkSpd + '*dt;if(_wacc>=_ml){dir=1;_setSt("I");as.setAnimation(0,bind.I,true);}}';
@@ -354,6 +356,10 @@ function createPetWindow(config) {
                                     ds.wx = petPos.x; ds.wy = petPos.y;
                                     ds.dw = false; ds.wt = Date.now();
                                     isDragging = false;
+                                    // 触摸即打断行走：停止位移并让动画回到待机
+                                    walk.active = false;
+                                    walk.lastT = 0;
+                                    try { wv.evaluateJavascript("javascript:window._stopWalk&&window._stopWalk()", null); } catch(e) {}
                                     return true;
                                 case android.view.MotionEvent.ACTION_MOVE:
                                     if (Math.abs(rx - ds.dx) > 10 || Math.abs(ry - ds.dy) > 10) {
