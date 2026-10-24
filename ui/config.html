@@ -294,6 +294,15 @@ body {
     margin-top: 2px;
 }
 
+.setting-item.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.setting-item.disabled .label .desc::after {
+    content: "（仅独立触控窗口开启时可用）";
+}
+
 /* 开关 */
 .switch {
     position: relative;
@@ -644,8 +653,13 @@ body {
             <div class="tab-panel" id="tab-display">
                 <div class="setting-group">
                     <div class="group-title">显示</div>
-                    <div class="setting-item"><div class="label">窗口宽度<div class="desc">桌宠窗口像素宽度</div></div><input type="number" class="select-control" id="windowWidth" value="200" min="30" style="width:80px"></div>
-                    <div class="setting-item"><div class="label">窗口高度<div class="desc">桌宠窗口像素高度</div></div><input type="number" class="select-control" id="windowHeight" value="220" min="30" style="width:80px"></div>
+                    <div class="setting-item"><div class="label">独立触控窗口<div class="desc">角色正常渲染，另外叠加一个可调的透明窗口负责拖动与点击，避免空白处误触</div></div><label class="switch"><input type="checkbox" id="fullscreenRender"><span class="slider"></span></label></div>
+                    <div class="setting-item" id="itemWindowWidth"><div class="label">渲染窗口宽度<div class="desc">角色窗口像素宽度，决定绘制范围</div></div><input type="number" class="select-control" id="windowWidth" value="200" min="30" style="width:80px"></div>
+                    <div class="setting-item" id="itemWindowHeight"><div class="label">渲染窗口高度<div class="desc">角色窗口像素高度，决定绘制范围</div></div><input type="number" class="select-control" id="windowHeight" value="220" min="30" style="width:80px"></div>
+                    <div class="setting-item" id="itemHitRatio"><div class="label">触控窗口比例<div class="desc">判定区域相对渲染窗口的尺寸比例</div></div><input type="number" class="select-control" id="hitAreaRatio" value="0.7" min="0.2" max="3" step="0.1" style="width:80px"></div>
+                    <div class="setting-item" id="itemHitOffsetX"><div class="label">触控窗口水平偏移<div class="desc">默认居中，正值向右，负值向左（像素）</div></div><input type="number" class="select-control" id="hitAreaOffsetX" value="0" style="width:80px"></div>
+                    <div class="setting-item" id="itemHitOffsetY"><div class="label">触控窗口垂直偏移<div class="desc">默认居中，正值向下，负值向上（像素）</div></div><input type="number" class="select-control" id="hitAreaOffsetY" value="0" style="width:80px"></div>
+                    <div class="setting-item" id="itemHitTip"><div class="label">调整提示<div class="desc">开启独立触控窗口后，可在系统「开发者选项 → 显示布局边界」中看到触控区域，方便微调比例与偏移</div></div></div>
                     <div class="setting-item"><div class="label">模型水平位置<div class="desc">画布内的水平坐标（像素）</div></div><input type="number" class="select-control" id="positionX" value="" placeholder="默认居中" style="width:140px"></div>
                     <div class="setting-item"><div class="label">模型垂直位置<div class="desc">画布内的垂直坐标（像素）</div></div><input type="number" class="select-control" id="positionY" value="" placeholder="默认靠上" style="width:140px"></div>
                     <div class="setting-item"><div class="label">缩放倍率<div class="desc">桌宠显示大小（以窗口为基准）</div></div><select class="select-control" id="displayScale"><option value="0.25">x0.25</option><option value="0.5">x0.5</option><option value="0.75">x0.75</option><option value="1.0" selected>x1.0</option><option value="1.25">x1.25</option><option value="1.5">x1.5</option><option value="1.75">x1.75</option><option value="2.0">x2.0</option><option value="2.25">x2.25</option><option value="2.5">x2.5</option><option value="2.75">x2.75</option><option value="3.0">x3.0</option><option value="3.25">x3.25</option><option value="3.5">x3.5</option><option value="3.75">x3.75</option><option value="4.0">x4.0</option><option value="4.25">x4.25</option><option value="4.5">x4.5</option><option value="4.75">x4.75</option><option value="5.0">x5.0</option></select></div>
@@ -658,6 +672,7 @@ body {
                 <div class="setting-group">
                     <div class="group-title">关于</div>
                     <div class="setting-item"><div class="label">ArkPets Lite<div class="desc">基于 Ark-Pets 与 ArkPets-Web 项目 · B站：地月系地球</div></div></div>
+                    <div class="setting-item"><div class="label">项目地址<div class="desc">github.com/DYXDQ/arkpets-lite</div></div><button class="btn btn-secondary" id="btnOpenRepo">打开</button></div>
                 </div>
             </div>
         </div>
@@ -836,8 +851,12 @@ body {
             bindSlider('walkSpeed', 'walkSpeedVal', 'behavior_walk_speed', '', ' px/s');
             bindSlider('opacitySlider', 'opacitySliderVal', 'opacity', '', '%', 0.01);
             bindSelect('downloadSource', 'download_source');
+            bindSwitch('fullscreenRender', 'fullscreen_render');
             bindInput('windowWidth', 'window_width');
             bindInput('windowHeight', 'window_height');
+            bindInput('hitAreaRatio', 'hit_area_ratio');
+            bindInput('hitAreaOffsetX', 'hit_area_offset_x');
+            bindInput('hitAreaOffsetY', 'hit_area_offset_y');
             bindInput('positionX', 'position_x');
             bindInput('positionY', 'position_y');
             bindSelect('directionSwitch', 'behavior_direction_switching');
@@ -847,7 +866,27 @@ body {
         function bindSwitch(id, key) {
             var el = document.getElementById(id);
             if (!el) return;
-            el.addEventListener('change', function() { config[key] = el.checked; saveConfig(); });
+            el.addEventListener('change', function() {
+                config[key] = el.checked;
+                saveConfig();
+                syncConflictItems();
+            });
+        }
+
+        // 触控窗口参数只在独立触控窗口开启时生效；渲染窗口尺寸始终可用
+        function setItemEnabled(id, enabled) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('disabled', !enabled);
+            var input = el.querySelector('input');
+            if (input) input.disabled = !enabled;
+        }
+
+        function syncConflictItems() {
+            var on = !!config.fullscreen_render;
+            ['itemHitRatio', 'itemHitOffsetX', 'itemHitOffsetY', 'itemHitTip'].forEach(function(id) {
+                setItemEnabled(id, on);
+            });
         }
 
         function bindSlider(id, vid, key, prefix, suffix, mult) {
@@ -895,9 +934,11 @@ body {
                 'behavior_allow_walk':'allowWalk','behavior_allow_sit':'allowSit',
                 'behavior_allow_sleep':'allowSleep','behavior_allow_special':'allowSpecial',
                 'behavior_allow_interact':'allowInteract','behavior_ai_activation':'aiActivation',
+                'fullscreen_render':'fullscreenRender',
                 'behavior_walk_speed':'walkSpeed','behavior_direction_switching':'directionSwitch',
                 'display_scale':'displayScale',
-                'opacity':'opacitySlider','download_source':'downloadSource','window_width':'windowWidth','window_height':'windowHeight','position_x':'positionX','position_y':'positionY'
+                'opacity':'opacitySlider','download_source':'downloadSource','window_width':'windowWidth','window_height':'windowHeight','position_x':'positionX','position_y':'positionY',
+                'hit_area_ratio':'hitAreaRatio','hit_area_offset_x':'hitAreaOffsetX','hit_area_offset_y':'hitAreaOffsetY'
             };
             var displayMap = {
                 'behavior_ai_activation': {suffix:' 级'},
@@ -928,7 +969,7 @@ body {
                             }
                         }
                     } else {
-                        el.value = setVal;
+                        el.value = (setVal === null || setVal === undefined) ? '' : setVal;
                     }
                     if (dm && dm.label) {
                         var lbl = document.getElementById(dm.label);
@@ -936,6 +977,7 @@ body {
                     }
                 }
             }
+            syncConflictItems();
             // 手动触发滑块显示
             updateSliderDisplays();
             restorePositionPicker();
@@ -1015,6 +1057,13 @@ function updateSliderDisplays() {
         }
 
         function initDownloadDialog() {
+            document.getElementById('btnOpenRepo').addEventListener('click', function() {
+                if (window.AndroidBridge && window.AndroidBridge.openUrl) {
+                    window.AndroidBridge.openUrl('https://github.com/DYXDQ/arkpets-lite');
+                } else {
+                    window.open('https://github.com/DYXDQ/arkpets-lite', '_blank');
+                }
+            });
             document.getElementById('btnDownload').addEventListener('click', function() {
                 document.getElementById('downloadDialog').classList.add('show');
                 document.getElementById('downloadProgress').style.width = '0%';

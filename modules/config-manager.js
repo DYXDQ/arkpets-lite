@@ -18,6 +18,11 @@ const DEFAULT_CONFIG = {
     display_scale: 1.0,
     window_width: 200,
     window_height: 220,
+    fullscreen_render: false,
+    // 双层模式下触摸判定窗口的尺寸比例(相对于角色窗口)与相对角色的偏移(像素)
+    hit_area_ratio: 0.7,
+    hit_area_offset_x: 0,
+    hit_area_offset_y: 0,
     position_x: null,
     position_y: null,
     initial_position_x: -1,
@@ -99,7 +104,9 @@ function getCharacterAssetPath(characterAsset) {
 function getCharacterFiles(characterAsset) {
     const dir = getCharacterAssetPath(characterAsset);
     if (!files.exists(dir)) return null;
-    const files_list = files.listDir(dir);
+    let files_list;
+    try { files_list = files.listDir(dir) || []; }
+    catch(e) { return null; }
     const s = files_list.find(function(f) { return f.endsWith(".skel"); });
     const a = files_list.find(function(f) { return f.endsWith(".atlas"); });
     const p = files_list.find(function(f) { return f.endsWith(".png"); });

@@ -28,7 +28,8 @@
         stopPet: function() { auto0.invoke('stopPet', {}, function(){}); },
         startDownload: function(src, cb) { auto0.invoke('startDownload', {source: src}, cb); },
         cancelDownload: function(cb) { auto0.invoke('cancelDownload', {}, cb); },
-        loadProfile: function(asset, cb) { auto0.invoke('loadProfile', {character_asset: asset}, cb); }
+        loadProfile: function(asset, cb) { auto0.invoke('loadProfile', {character_asset: asset}, cb); },
+        openUrl: function(url) { auto0.invoke('openUrl', {url: url}, function(){}); }
     };
 
     if (typeof _INIT_CONFIG !== 'undefined' && typeof window.onBridgeReady === 'function') {

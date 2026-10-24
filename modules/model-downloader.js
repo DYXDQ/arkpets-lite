@@ -2,9 +2,8 @@
  * model-downloader.js - 模型下载管理
  */
 
-var BASE_DIR = files.join(files.cwd(), "res");
-var CACHE = context.getCacheDir().getAbsolutePath();
-var TEMP_DIR = CACHE + "/dl";
+function baseDir() { return files.join(files.cwd(), "res"); }
+function tempDir() { return context.getCacheDir().getAbsolutePath() + "/dl"; }
 
 var URLS = {
     github: "https://github.com/isHarryh/Ark-Models/archive/refs/heads/main.zip",
@@ -23,7 +22,7 @@ function cancelDownload() {
     task.cancelled = true;
     currentTask = null;
     try { if (task.conn) task.conn.disconnect(); } catch(e) {}
-    try { files.remove(TEMP_DIR + "/models.zip"); } catch(e) {}
+    try { files.remove(tempDir() + "/models.zip"); } catch(e) {}
     return true;
 }
 
@@ -31,6 +30,7 @@ function downloadModelPack(source, onProgress, onComplete) {
     if (isDownloading()) { onComplete && onComplete(false, "已有下载任务进行中"); return false; }
 
     var zipUrl = URLS[source] || URLS.ghproxy;
+    var TEMP_DIR = tempDir();
     var zipPath = TEMP_DIR + "/models.zip";
     var task = { cancelled: false, conn: null, thread: null };
     currentTask = task;
@@ -124,7 +124,7 @@ function extractModels(zipPath, shouldCancel) {
     try {
         var zip = new java.util.zip.ZipFile(new java.io.File(zipPath));
         var entries = zip.entries();
-        var targetDir = new java.io.File(BASE_DIR);
+        var targetDir = new java.io.File(baseDir());
         var count = 0;
 
         while (entries.hasMoreElements()) {

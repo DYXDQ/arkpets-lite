@@ -34,7 +34,7 @@ threads.start(function() {
         config = configManager.loadConfig();
 
         ui.run(function() { ui.loadStatus.setText("正在扫描模型..."); });
-        characters = characterManager.scanCharacters();
+        characters = scanWithRetry();
 
         ui.run(function() { ui.loadStatus.setText("正在构建界面..."); });
         html = files.read(BASE_PATH + "ui/config.html");
@@ -53,9 +53,25 @@ threads.start(function() {
         });
     } catch(e) {
         console.error("Init failed: " + e);
-        ui.run(function() { ui.loadStatus.setText("加载失败: " + e); });
+        var msg = String(e && e.message ? e.message : e);
+        ui.run(function() { ui.loadStatus.setText("加载失败: " + msg); });
     }
 });
+
+// 部分设备首次访问存储会被系统中断（InterruptedException），重试几次即可
+function scanWithRetry() {
+    var lastErr = null;
+    for (var i = 0; i < 3; i++) {
+        try {
+            return characterManager.scanCharacters();
+        } catch(e) {
+            lastErr = e;
+            log("扫描模型失败，第 " + (i + 1) + " 次: " + e);
+            sleep(300);
+        }
+    }
+    throw lastErr;
+}
 
 events.on("exit", function() { petWindow.destroyPetWindow(); });
 
@@ -125,6 +141,14 @@ function setupWebView(wv) {
                     result = {ok: modelDownloader.cancelDownload()};
                 } else if (cmd === "loadProfile") {
                     result = configManager.loadProfile(params.character_asset);
+                } else if (cmd === "openUrl") {
+                    try {
+                        var it = new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse(String(params.url)));
+                        it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(it);
+                        result = {ok: true};
+                    } catch(e) { result = {ok: false, msg: String(e)}; }
                 }
 
                 var resultExpr = result ? JSON.stringify(result) : "null";
