@@ -136,8 +136,13 @@ function makeWebViewSettings(wv) {
     }));
     wv.setWebViewClient(new JavaAdapter(android.webkit.WebViewClient, {
         onPageFinished: function(webView, url) {
-            // 加载完成后再设一次透明，否则部分设备会保留默认白底（全屏模式下表现为半透明）
+            // 加载完成后再设一次透明，否则部分设备会保留默认白底
             try { webView.setBackgroundColor(android.graphics.Color.TRANSPARENT); } catch(e) {}
+            // 独立触控窗口模式下，渲染层不接收触摸，避免透明区域挡住其它应用
+            if (useFullscreen) {
+                try { webView.setClickable(false); webView.setFocusable(false); } catch(e) {}
+                try { petWindow && petWindow.setTouchable(false); } catch(e) {}
+            }
         },
         shouldOverrideUrlLoading: function(webView, request) {
             var url = "";
@@ -323,9 +328,15 @@ function createPetWindow(config) {
                     makeWebViewSettings(wv);
 
                     if (useFullscreen) {
+                        // 渲染窗口不参与触摸（否则角色周围的透明区域会挡住其它应用），
+                        // 拖动/点击全部交给下面的触控窗口
+                        try { petWindow.setTouchable(false); } catch(e) {}
+                        try { wv.setClickable(false); wv.setFocusable(false); } catch(e) {}
+
                         // 触控窗口：略小于角色窗口，只负责拖动与点击，内容完全透明
+                        // 触控窗口位于渲染窗口之上，必须保证自身完全透明，否则会给角色蒙上一层淡雾
                         hitWindow = floaty.rawWindow(
-                            <vertical><frame id="hit" w={hitsizeW + "px"} h={hitsizeH + "px"} bg="#00000000" /></vertical>
+                            <vertical><frame id="hit" w={hitsizeW + "px"} h={hitsizeH + "px"} bg="#00FFFFFF" /></vertical>
                         );
                         hitWindow.setPosition(Math.round(petPos.x + petCenterOff.x), Math.round(petPos.y + petCenterOff.y));
                         hitWv = hitWindow.hit;
