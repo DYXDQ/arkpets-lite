@@ -81,21 +81,27 @@ function notifyEdge(side) {
     try { petWv.evaluateJavascript("javascript:window._onEdge&&window._onEdge(" + side + ")", null); } catch(e) {}
 }
 
+// 配置值一律按数字处理，非法值回落到默认值（同时避免拼接进内联 JS 造成注入）
+function num(v, def) {
+    var n = Number(v);
+    return (v === null || v === undefined || isNaN(n)) ? def : n;
+}
+
 function createPetWindow(config) {
     if (isPetRunning) { toast("桌宠已在运行中"); return; }
     if (!ensureSpineJs()) { toast("缺少 spine-webgl.js"); return; }
     stopWalkTimer();
     currentConfig = config;
 
-    var cfg_scale = config.display_scale || 1.0;
+    var cfg_scale = num(config.display_scale, 1.0);
     var cfg_allowWalk = config.behavior_allow_walk !== false;
     var cfg_allowSit = config.behavior_allow_sit !== false;
     var cfg_allowSleep = config.behavior_allow_sleep !== false;
     var cfg_allowSpecial = config.behavior_allow_special !== false;
     var cfg_allowInteract = config.behavior_allow_interact !== false;
-    var cfg_dirSwitch = config.behavior_direction_switching || 0;
-    var cfg_baseW = config.window_width || 200;
-    var cfg_baseH = config.window_height || 220;
+    var cfg_dirSwitch = num(config.behavior_direction_switching, 0);
+    var cfg_baseW = num(config.window_width, 200);
+    var cfg_baseH = num(config.window_height, 220);
     var cfg_posX = config.position_x; // null means default: c.width/2
     var cfg_posY = config.position_y; // null means default: c.height/5+c.height/20
 
@@ -135,16 +141,18 @@ function createPetWindow(config) {
             var pngB64 = android.util.Base64.encodeToString(
                 files.readBytes(files.join(skinDir, pnF)), android.util.Base64.NO_WRAP);
 
-            var renderMix = config.render_animation_mixture || 0.3;
-            var walkSpd = config.behavior_walk_speed || 30;
+            var renderMix = num(config.render_animation_mixture, 0.3);
+            var walkSpd = num(config.behavior_walk_speed, 30);
             walkSpeed = walkSpd;
-            var aiAct = config.behavior_ai_activation !== undefined ? config.behavior_ai_activation : 4;
-            var opacity = config.opacity !== undefined ? config.opacity : 1.0;
+            var aiAct = num(config.behavior_ai_activation, 4);
+            var opacity = num(config.opacity, 1.0);
             var aiFactor = Math.max(0.2, 1 - aiAct / 16);
 
-            // 构建 JS 位置表达式
-            var posXExpr = (cfg_posX !== null && cfg_posX !== undefined) ? cfg_posX : "c.width/2";
-            var posYExpr = (cfg_posY !== null && cfg_posY !== undefined) ? cfg_posY : "c.height/5+c.height/20";
+            // 构建 JS 位置表达式（强制转为数值，防止配置被篡改后注入任意 JS）
+            var posXExpr = "c.width/2";
+            if (cfg_posX !== null && cfg_posX !== undefined && !isNaN(Number(cfg_posX))) posXExpr = Number(cfg_posX);
+            var posYExpr = "c.height/5+c.height/20";
+            if (cfg_posY !== null && cfg_posY !== undefined && !isNaN(Number(cfg_posY))) posYExpr = Number(cfg_posY);
 
             var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pet</title>';
             html += '<style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:transparent}#c{display:block;width:100%;height:100%}</style>';

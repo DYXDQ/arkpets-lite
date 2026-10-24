@@ -624,22 +624,20 @@ body {
                     <div class="group-title">动作开关</div>
                     <div class="setting-item"><div class="label">允许行走<div class="desc">角色会随机左右走动</div></div><label class="switch"><input type="checkbox" id="allowWalk" checked><span class="slider"></span></label></div>
                     <div class="setting-item"><div class="label">允许坐下<div class="desc">角色偶尔会坐下</div></div><label class="switch"><input type="checkbox" id="allowSit" checked><span class="slider"></span></label></div>
-                    <div class="setting-item"><div class="label">允许睡觉<div class="desc">长时间无操作会入睡</div></div><label class="switch"><input type="checkbox" id="allowSleep" checked><span class="slider"></span></label></div>
+                    <div class="setting-item"><div class="label">允许睡觉<div class="desc">角色偶尔会进入睡眠动作</div></div><label class="switch"><input type="checkbox" id="allowSleep" checked><span class="slider"></span></label></div>
                     <div class="setting-item"><div class="label">允许特殊动作<div class="desc">部分角色有独特动作</div></div><label class="switch"><input type="checkbox" id="allowSpecial" checked><span class="slider"></span></label></div>
-                    <div class="setting-item"><div class="label">允许交互<div class="desc">点击触发互动动画</div></div><label class="switch"><input type="checkbox" id="allowInteract" checked><span class="slider"></span></label></div>
+                    <div class="setting-item"><div class="label">允许交互<div class="desc">点击桌宠触发互动动画</div></div><label class="switch"><input type="checkbox" id="allowInteract" checked><span class="slider"></span></label></div>
                 </div>
                 <div class="setting-group">
                     <div class="group-title">AI 与运动</div>
                     <div class="setting-item"><div class="label">AI 活跃级别<div class="desc">越高切换动作越频繁</div></div><div class="slider-control"><input type="range" id="aiActivation" min="0" max="16" value="4"><span class="value" id="aiActivationVal">4</span></div></div>
                     <div class="setting-item"><div class="label">行走速度<div class="desc">角色移动的像素速度</div></div><div class="slider-control"><input type="range" id="walkSpeed" min="0" max="200" value="30"><span class="value" id="walkSpeedVal">30 px/s</span></div></div>
-                    <div class="setting-item"><div class="label">方向切换<div class="desc">点击切换方向</div></div><select class="select-control" id="directionSwitch"><option value="0">禁用</option><option value="1">点击时</option></select></div>
+                    <div class="setting-item"><div class="label">方向切换<div class="desc">点击桌宠切换朝向</div></div><select class="select-control" id="directionSwitch"><option value="0">禁用</option><option value="1">点击时</option></select></div>
                 </div>
                 <div class="setting-group">
-                    <div class="group-title">位置与过渡</div>
-                                        <div class="setting-item"><div class="label">部署位置<div class="desc">点击下方区域选择初始位置</div></div></div>
+                    <div class="group-title">位置</div>
+                    <div class="setting-item"><div class="label">初始位置<div class="desc">点击下方区域设置启动时出现的位置</div></div></div>
                     <div class="position-picker" id="positionPicker"><div class="crosshair" id="crosshair" style="left:50%;top:50%"></div></div>
-                    
-                    
                 </div>
             </div>
 
@@ -648,26 +646,18 @@ body {
                     <div class="group-title">显示</div>
                     <div class="setting-item"><div class="label">窗口宽度<div class="desc">桌宠窗口像素宽度</div></div><input type="number" class="select-control" id="windowWidth" value="200" min="30" style="width:80px"></div>
                     <div class="setting-item"><div class="label">窗口高度<div class="desc">桌宠窗口像素高度</div></div><input type="number" class="select-control" id="windowHeight" value="220" min="30" style="width:80px"></div>
-                    <div class="setting-item"><div class="label">角色水平位置<div class="desc">JS 表达式，如 c.width/2</div></div><input type="text" class="select-control" id="positionX" value="" placeholder="c.width/2 (默认)" style="width:140px"></div>
-                    <div class="setting-item"><div class="label">角色垂直位置<div class="desc">JS 表达式，如 c.height/5+c.height/20</div></div><input type="text" class="select-control" id="positionY" value="" placeholder="c.height/5+c.height/20 (默认)" style="width:140px"></div>
-                    <div class="setting-item"><div class="label">缩放倍率<div class="desc">桌宠显示大小</div></div><select class="select-control" id="displayScale"><option value="0.25">x0.25</option><option value="0.5">x0.5</option><option value="0.75">x0.75</option><option value="1.0" selected>x1.0</option><option value="1.25">x1.25</option><option value="1.5">x1.5</option><option value="1.75">x1.75</option><option value="2.0">x2.0</option><option value="2.25">x2.25</option><option value="2.5">x2.5</option><option value="2.75">x2.75</option><option value="3.0">x3.0</option><option value="3.25">x3.25</option><option value="3.5">x3.5</option><option value="3.75">x3.75</option><option value="4.0">x4.0</option><option value="4.25">x4.25</option><option value="4.5">x4.5</option><option value="4.75">x4.75</option><option value="5.0">x5.0</option></select></div>
-                                                        </div>
-                <div class="setting-group">
-                    <div class="group-title">透明度</div>
+                    <div class="setting-item"><div class="label">模型水平位置<div class="desc">画布内的水平坐标（像素）</div></div><input type="number" class="select-control" id="positionX" value="" placeholder="默认居中" style="width:140px"></div>
+                    <div class="setting-item"><div class="label">模型垂直位置<div class="desc">画布内的垂直坐标（像素）</div></div><input type="number" class="select-control" id="positionY" value="" placeholder="默认靠上" style="width:140px"></div>
+                    <div class="setting-item"><div class="label">缩放倍率<div class="desc">桌宠显示大小（以窗口为基准）</div></div><select class="select-control" id="displayScale"><option value="0.25">x0.25</option><option value="0.5">x0.5</option><option value="0.75">x0.75</option><option value="1.0" selected>x1.0</option><option value="1.25">x1.25</option><option value="1.5">x1.5</option><option value="1.75">x1.75</option><option value="2.0">x2.0</option><option value="2.25">x2.25</option><option value="2.5">x2.5</option><option value="2.75">x2.75</option><option value="3.0">x3.0</option><option value="3.25">x3.25</option><option value="3.5">x3.5</option><option value="3.75">x3.75</option><option value="4.0">x4.0</option><option value="4.25">x4.25</option><option value="4.5">x4.5</option><option value="4.75">x4.75</option><option value="5.0">x5.0</option></select></div>
                     <div class="setting-item"><div class="label">不透明度</div><div class="slider-control"><input type="range" id="opacitySlider" min="10" max="100" value="100"><span class="value" id="opacitySliderVal">100%</span></div></div>
                 </div>
                 <div class="setting-group">
-                </div>
-                <div class="setting-group">
-                </div>
-                <div class="setting-group">
                     <div class="group-title">网络</div>
-                    <div class="setting-item"><div class="label">下载源<div class="desc">模型下载渠道</div></div><select class="select-control" id="downloadSource"><option value="ghproxy">国内代理</option><option value="github">GitHub 直连</option></select></div>
-
+                    <div class="setting-item"><div class="label">下载源<div class="desc">模型库下载渠道，下载后将覆盖同名模型文件</div></div><select class="select-control" id="downloadSource"><option value="ghproxy">国内代理</option><option value="github">GitHub 直连</option></select></div>
                 </div>
                 <div class="setting-group">
                     <div class="group-title">关于</div>
-                    <div class="setting-item"><div class="label">ArkPets Lite<div class="desc">基于 Ark-Pets 和 ArkPets-Web 项目.bili:地月系地球</div></div></div>
+                    <div class="setting-item"><div class="label">ArkPets Lite<div class="desc">基于 Ark-Pets 与 ArkPets-Web 项目 · B站：地月系地球</div></div></div>
                 </div>
             </div>
         </div>
@@ -706,10 +696,9 @@ body {
             applyConfigToUI();
         };
 
-        function loadCharacters() {
-            if (window.AndroidBridge) {
-                window.AndroidBridge.scanCharacters();
-            }
+        function reloadCharacters() {
+            // 模型列表由原生启动时注入，重载页面即可重新扫描
+            location.reload();
         }
 
         window.onCharactersReady = function(data) {
@@ -824,7 +813,7 @@ body {
                 }
             });
             document.getElementById('btnReload').addEventListener('click', function() {
-                location.reload();
+                reloadCharacters();
             });
         }
 
@@ -908,16 +897,12 @@ body {
                 'behavior_allow_interact':'allowInteract','behavior_ai_activation':'aiActivation',
                 'behavior_walk_speed':'walkSpeed','behavior_direction_switching':'directionSwitch',
                 'display_scale':'displayScale',
-'opacity':'opacitySlider','download_source':'downloadSource','window_width':'windowWidth','window_height':'windowHeight','position_x':'positionX','position_y':'positionY',
-
-
-                'download_source':'downloadSource'
+                'opacity':'opacitySlider','download_source':'downloadSource','window_width':'windowWidth','window_height':'windowHeight','position_x':'positionX','position_y':'positionY'
             };
             var displayMap = {
                 'behavior_ai_activation': {suffix:' 级'},
                 'behavior_walk_speed': {suffix:' px/s'},
-                'display_margin_bottom': {suffix:' px'},
-'opacity': {suffix:'%', mult:0.01, label:'opacitySliderVal'}
+                'opacity': {suffix:'%', mult:0.01, label:'opacitySliderVal'}
             };
             var selectKeys = ['display_scale','directionSwitch','downloadSource'];
             for (var key in config) {
@@ -1039,14 +1024,24 @@ function updateSliderDisplays() {
                 btn.textContent = '开始下载';
             });
             document.getElementById('btnCancelDownload').addEventListener('click', function() {
-                document.getElementById('downloadDialog').classList.remove('show');
                 var btn = document.getElementById('btnConfirmDownload');
+                if (btn.disabled) {
+                    // 下载进行中：先通知原生端取消，再复位界面
+                    if (window.AndroidBridge) window.AndroidBridge.cancelDownload();
+                    document.getElementById('downloadStatus').textContent = '已取消下载';
+                }
+                document.getElementById('downloadDialog').classList.remove('show');
                 btn.disabled = false;
                 btn.textContent = '开始下载';
             });
             document.getElementById('btnConfirmDownload').addEventListener('click', function() {
                 if (window.AndroidBridge) {
-                    window.AndroidBridge.startDownload(config.download_source || 'ghproxy');
+                    window.AndroidBridge.startDownload(config.download_source || 'ghproxy', function(res) {
+                        if (res && res.ok) return;
+                        document.getElementById('btnConfirmDownload').disabled = false;
+                        document.getElementById('btnConfirmDownload').textContent = '开始下载';
+                        document.getElementById('downloadStatus').textContent = (res && res.msg) || '下载启动失败';
+                    });
                     document.getElementById('btnConfirmDownload').disabled = true;
                     document.getElementById('btnConfirmDownload').textContent = '下载中...';
                 }
@@ -1054,6 +1049,9 @@ function updateSliderDisplays() {
         }
 
         window.updateDownloadProgress = function(percent, status) {
+            var dialog = document.getElementById('downloadDialog');
+            // 进度晚于取消到达或弹窗已关闭时丢弃，避免"已取消"后又被刷新/自动关闭
+            if (!dialog.classList.contains('show')) return;
             var bar = document.getElementById('downloadProgress');
             var label = document.getElementById('downloadStatus');
             if (percent < 0) {
@@ -1069,7 +1067,7 @@ function updateSliderDisplays() {
                 document.getElementById('btnConfirmDownload').textContent = '下载完成';
                 setTimeout(function() {
                     document.getElementById('downloadDialog').classList.remove('show');
-                    loadCharacters();
+                    reloadCharacters();
                 }, 1500);
             }
         };

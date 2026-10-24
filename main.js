@@ -111,7 +111,7 @@ function setupWebView(wv) {
                     petWindow.destroyPetWindow();
                     result = {ok: true};
                 } else if (cmd === "startDownload") {
-                    modelDownloader.downloadModelPack(params.source,
+                    var started = modelDownloader.downloadModelPack(params.source,
                         function(pct, st) {
                             ui.run(function() { callJS(wv, "if(window.updateDownloadProgress)window.updateDownloadProgress(" + pct + ",'" + st.replace(/'/g, "\\'") + "')"); });
                         },
@@ -120,7 +120,9 @@ function setupWebView(wv) {
                             toast(msg);
                         }
                     );
-                    result = {ok: true};
+                    result = started ? {ok: true} : {ok: false, msg: "已有下载任务进行中"};
+                } else if (cmd === "cancelDownload") {
+                    result = {ok: modelDownloader.cancelDownload()};
                 } else if (cmd === "loadProfile") {
                     result = configManager.loadProfile(params.character_asset);
                 }

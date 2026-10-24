@@ -16,6 +16,10 @@ const DEFAULT_CONFIG = {
     behavior_direction_switching: 0,
 
     display_scale: 1.0,
+    window_width: 200,
+    window_height: 220,
+    position_x: null,
+    position_y: null,
     initial_position_x: -1,
     initial_position_y: -1,
     opacity: 1.0,

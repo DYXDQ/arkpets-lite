@@ -26,7 +26,8 @@
             });
         },
         stopPet: function() { auto0.invoke('stopPet', {}, function(){}); },
-        startDownload: function(src) { auto0.invoke('startDownload', {source: src}, function(){}); },
+        startDownload: function(src, cb) { auto0.invoke('startDownload', {source: src}, cb); },
+        cancelDownload: function(cb) { auto0.invoke('cancelDownload', {}, cb); },
         loadProfile: function(asset, cb) { auto0.invoke('loadProfile', {character_asset: asset}, cb); }
     };
 
