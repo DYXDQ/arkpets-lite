@@ -1,6 +1,6 @@
 # ArkPets Lite
 
-基于 [AutoX.js](https://github.com/kkevsekk1/AutoX) 的 Android 桌宠应用，使用 Spine 动画在桌面上渲染明日方舟风格的模型。
+基于 [AutoX.js](https://github.com/autox-community/AutoX) 的 Android 桌宠应用，使用 Spine 动画在桌面上渲染明日方舟风格的模型。
 
 灵感与素材来自 [Ark-Pets](https://github.com/isHarryh/Ark-Pets) 和 [ArkPets-Web](https://github.com/fuyufjh/ArkPets-Web) 项目。
 
@@ -20,7 +20,7 @@
 
 ## 安装
 
-下载release中的安装包，或使用 [AutoX.js](https://github.com/kkevsekk1/AutoX) 导入本工程后自行打包。
+下载release中的安装包，或使用 [AutoX.js](https://github.com/autox-community/AutoX) 导入本工程后自行打包。
 
 ## 使用说明
 
