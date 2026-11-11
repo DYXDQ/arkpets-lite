@@ -654,6 +654,8 @@ body {
                 <div class="setting-group">
                     <div class="group-title">显示</div>
                     <div class="setting-item"><div class="label">独立触控窗口<div class="desc">角色正常渲染，另外叠加一个可调的透明窗口负责拖动与点击，避免空白处误触</div></div><label class="switch"><input type="checkbox" id="fullscreenRender"><span class="slider"></span></label></div>
+                    <div class="setting-item" id="itemHitOnTop"><div class="label">触控窗口置顶<div class="desc">开启：透明触控层压在渲染层上方（默认）。关闭：渲染层在上，避免上层透明窗口把角色压淡；渲染层不参与触摸，触控仍由下方窗口处理</div></div><label class="switch"><input type="checkbox" id="hitWindowOnTop" checked><span class="slider"></span></label></div>
+                    <div class="setting-item" id="itemA11yOverlay"><div class="label">无障碍覆盖层（去掉半透明）<div class="desc">Android 12+ 规定：不可触摸的悬浮窗不透明度超过 0.8 时触摸无法穿透，所以分层模式下角色会略显透明。改用无障碍覆盖层(TYPE_ACCESSIBILITY_OVERLAY)可保持完全不透明且仍可穿透；需要开启无障碍服务，失败会自动回退</div></div><label class="switch"><input type="checkbox" id="a11yOverlay"><span class="slider"></span></label></div>
                     <div class="setting-item" id="itemWindowWidth"><div class="label">渲染窗口宽度<div class="desc">角色窗口像素宽度，决定绘制范围</div></div><input type="number" class="select-control" id="windowWidth" value="200" min="30" style="width:80px"></div>
                     <div class="setting-item" id="itemWindowHeight"><div class="label">渲染窗口高度<div class="desc">角色窗口像素高度，决定绘制范围</div></div><input type="number" class="select-control" id="windowHeight" value="220" min="30" style="width:80px"></div>
                     <div class="setting-item" id="itemHitRatio"><div class="label">触控窗口比例<div class="desc">判定区域相对渲染窗口的尺寸比例</div></div><input type="number" class="select-control" id="hitAreaRatio" value="0.7" min="0.2" max="3" step="0.1" style="width:80px"></div>
@@ -852,6 +854,8 @@ body {
             bindSlider('opacitySlider', 'opacitySliderVal', 'opacity', '', '%', 0.01);
             bindSelect('downloadSource', 'download_source');
             bindSwitch('fullscreenRender', 'fullscreen_render');
+            bindSwitch('hitWindowOnTop', 'hit_window_on_top');
+            bindSwitch('a11yOverlay', 'a11y_overlay');
             bindInput('windowWidth', 'window_width');
             bindInput('windowHeight', 'window_height');
             bindInput('hitAreaRatio', 'hit_area_ratio');
@@ -884,7 +888,7 @@ body {
 
         function syncConflictItems() {
             var on = !!config.fullscreen_render;
-            ['itemHitRatio', 'itemHitOffsetX', 'itemHitOffsetY', 'itemHitTip'].forEach(function(id) {
+            ['itemHitOnTop', 'itemA11yOverlay', 'itemHitRatio', 'itemHitOffsetX', 'itemHitOffsetY', 'itemHitTip'].forEach(function(id) {
                 setItemEnabled(id, on);
             });
         }
@@ -934,7 +938,7 @@ body {
                 'behavior_allow_walk':'allowWalk','behavior_allow_sit':'allowSit',
                 'behavior_allow_sleep':'allowSleep','behavior_allow_special':'allowSpecial',
                 'behavior_allow_interact':'allowInteract','behavior_ai_activation':'aiActivation',
-                'fullscreen_render':'fullscreenRender',
+                'fullscreen_render':'fullscreenRender','hit_window_on_top':'hitWindowOnTop','a11y_overlay':'a11yOverlay',
                 'behavior_walk_speed':'walkSpeed','behavior_direction_switching':'directionSwitch',
                 'display_scale':'displayScale',
                 'opacity':'opacitySlider','download_source':'downloadSource','window_width':'windowWidth','window_height':'windowHeight','position_x':'positionX','position_y':'positionY',

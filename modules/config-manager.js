@@ -23,6 +23,11 @@ const DEFAULT_CONFIG = {
     hit_area_ratio: 0.7,
     hit_area_offset_x: 0,
     hit_area_offset_y: 0,
+    // 双层模式下触控窗口是否置于渲染窗口之上
+    //  true  - 触控窗口在上（默认）；false - 渲染窗口在上，画面不再被上层透明窗口压薄
+    hit_window_on_top: true,
+    // 无障碍覆盖层(TYPE_ACCESSIBILITY_OVERLAY)：绕开 Android12+ 对不可触摸悬浮窗的 0.8 不透明度限制
+    a11y_overlay: false,
     position_x: null,
     position_y: null,
     initial_position_x: -1,

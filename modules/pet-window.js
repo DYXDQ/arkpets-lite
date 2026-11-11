@@ -1,3 +1,9 @@
+// 无障碍覆盖层（TYPE_ACCESSIBILITY_OVERLAY）相关逻辑见 modules/overlay-window.js：
+// Android 12+ 起，SAW 的 TYPE_APPLICATION_OVERLAY 窗口只有在遮挡不透明度 <= 0.8
+// 时触摸才能穿透，桌宠渲染窗口正好踩中这条限制（分层模式会略透明）；
+// 无障碍覆盖层属于可信窗口，可在 alpha = 1.0 的同时保持穿透。
+var overlayWindow = require("./overlay-window.js");
+
 var petWindow = null;
 var hitWindow = null;
 var isPetRunning = false;
@@ -9,6 +15,12 @@ function cacheDir() { return context.getCacheDir().getAbsolutePath(); }
 //  false - 单窗口，WebView 与渲染区域同大小（旧行为，热区等于窗口）
 //  true  - 双层，全屏透明 WebView 负责渲染，小窗口负责触摸判定
 var useFullscreen = false;
+// 双层模式下两层的上下关系：true - 触控窗口在上（默认）；false - 渲染窗口在上
+// 悬浮窗的层级由创建顺序决定（后创建者在上），所以这个值决定先建哪一层
+var hitOnTop = true;
+// 无障碍覆盖层：用 TYPE_ACCESSIBILITY_OVERLAY 代替 TYPE_APPLICATION_OVERLAY，
+// 绕开 Android12+ 对「不可触摸悬浮窗」的 0.8 不透明度限制（分层时不再变淡）
+var useA11yOverlay = false;
 
 // 行走控制：位移由原生定时器积分，WebView 只上报状态变化（低频、可靠）
 var petWv = null;          // 渲染 WebView
@@ -169,6 +181,12 @@ function createPetWindow(config) {
     stopWalkTimer();
     currentConfig = config;
     useFullscreen = config.fullscreen_render === true;
+    hitOnTop = config.hit_window_on_top !== false;
+    // 无障碍覆盖层只在分层模式下有意义（单窗口本身可触摸，不会被压透明度）
+    useA11yOverlay = useFullscreen && config.a11y_overlay === true && overlayWindow.canUse();
+    if (useFullscreen && config.a11y_overlay === true && !useA11yOverlay) {
+        toast("未检测到无障碍服务，已回退普通悬浮窗（角色仍会略透明）");
+    }
 
     var cfg_scale = num(config.display_scale, 1.0);
     var cfg_allowWalk = config.behavior_allow_walk !== false;
@@ -321,28 +339,63 @@ function createPetWindow(config) {
                     closeWindows();
 
                     var wv, hitWv = null;
+
+                    // 统一入口：优先用无障碍覆盖层（不会被系统压到 0.8 不透明度），失败则回退 floaty
+                    var makeWindow = function(view, w, h, x, y) {
+                        if (useA11yOverlay) {
+                            try {
+                                return overlayWindow.create(view, w, h, x, y);
+                            } catch (e) {
+                                console.error("无障碍覆盖层创建失败: " + e);
+                                useA11yOverlay = false;
+                                toast("无障碍悬浮层不可用，已回退（画面仍会略透明）");
+                            }
+                        }
+                        var fw = floaty.rawWindow(view);
+                        try { fw.setPosition(Math.round(x), Math.round(y)); } catch(e) {}
+                        return fw;
+                    };
+
                     // 渲染窗口始终为角色大小（与单层一致），双层额外叠加一个触控窗口
-                    petWindow = floaty.rawWindow(
-                        <vertical><webview id="wv" w={sizeW + "px"} h={sizeH + "px"} /></vertical>
-                    );
-                    petWindow.setPosition(Math.round(petPos.x), Math.round(petPos.y));
-                    wv = petWindow.wv;
-                    makeWebViewSettings(wv);
+                    var createRenderWindow = function() {
+                        var view = ui.inflate(
+                            <vertical><webview id="wv" w={sizeW + "px"} h={sizeH + "px"} /></vertical>, null, false
+                        );
+                        wv = view.wv;
+                        makeWebViewSettings(wv);
+                        petWindow = makeWindow(view, sizeW, sizeH, petPos.x, petPos.y);
+                        try { petWindow.setPosition(Math.round(petPos.x), Math.round(petPos.y)); } catch(e) {}
+                    };
+
+                    // 触控窗口：略小于角色窗口，只负责拖动与点击，内容完全透明
+                    // 它可能压在渲染窗口之上，所以必须保证自身完全透明，否则会给角色蒙上一层淡雾
+                    var createHitWindow = function() {
+                        var view = ui.inflate(
+                            <vertical><frame id="hit" w={hitsizeW + "px"} h={hitsizeH + "px"} bg="#00FFFFFF" /></vertical>, null, false
+                        );
+                        hitWv = view.hit;
+                        hitWv.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+                        hitWindow = makeWindow(view, hitsizeW, hitsizeH, petPos.x + petCenterOff.x, petPos.y + petCenterOff.y);
+                        try { hitWindow.setPosition(Math.round(petPos.x + petCenterOff.x), Math.round(petPos.y + petCenterOff.y)); } catch(e) {}
+                    };
+
+                    // 后创建的悬浮窗位于上层：
+                    //  触控窗口置顶 → 先建渲染窗口，再建触控窗口（默认）
+                    //  渲染窗口置顶 → 先建触控窗口，再建渲染窗口
+                    // 渲染窗口在两种顺序下都设为不可触摸，触摸会穿透到下面的触控窗口
+                    if (useFullscreen && !hitOnTop) {
+                        createHitWindow();
+                        createRenderWindow();
+                    } else {
+                        createRenderWindow();
+                        if (useFullscreen) createHitWindow();
+                    }
 
                     if (useFullscreen) {
                         // 渲染窗口不参与触摸（否则角色周围的透明区域会挡住其它应用），
-                        // 拖动/点击全部交给下面的触控窗口
+                        // 拖动/点击全部交给触控窗口
                         try { petWindow.setTouchable(false); } catch(e) {}
                         try { wv.setClickable(false); wv.setFocusable(false); } catch(e) {}
-
-                        // 触控窗口：略小于角色窗口，只负责拖动与点击，内容完全透明
-                        // 触控窗口位于渲染窗口之上，必须保证自身完全透明，否则会给角色蒙上一层淡雾
-                        hitWindow = floaty.rawWindow(
-                            <vertical><frame id="hit" w={hitsizeW + "px"} h={hitsizeH + "px"} bg="#00FFFFFF" /></vertical>
-                        );
-                        hitWindow.setPosition(Math.round(petPos.x + petCenterOff.x), Math.round(petPos.y + petCenterOff.y));
-                        hitWv = hitWindow.hit;
-                        hitWv.setBackgroundColor(android.graphics.Color.TRANSPARENT);
                     }
 
                     var touchView = hitWv || wv;

@@ -2,6 +2,7 @@
 build/
 *.apk
 *.apk.*
+*.bak.*
 
 # ===== 运行时生成 =====
 ui/config_loaded.html
