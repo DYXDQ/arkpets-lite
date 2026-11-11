@@ -19,7 +19,7 @@
 
 ## 安装
 
-下载release中的安装包，或使用 AutoX.js 导入本工程后自行打包。
+下载release中的安装包，或使用 [AutoX.js](https://github.com/kkevsekk1/AutoX) 导入本工程后自行打包。
 
 ## 使用说明
 
@@ -98,5 +98,5 @@ https://github.com/DYXDQ/arkpets-lite
 
 B 站：地月系地球
 你可以奖励我
-![fuck-me](./res/fuck-me.png)
+[投币](https://b23.tv/mCVXQ6E)
 
