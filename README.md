@@ -14,8 +14,9 @@
 
 ## 运行要求
 
-- Android 设备（arm64-v8a / armeabi-v7a）
+- Android 设备（arm64-v8a）
 - 悬浮窗权限（首次启动会提示申请）
+- 可选无障碍（用于分层渲染去掉默认的80%透明度）
 
 ## 安装
 
@@ -87,7 +88,7 @@
 - 行走位移由原生定时器积分，WebView 只上报状态变化（`ML` / `MR`），减少跨进程调用
 - 渲染窗口尺寸固定为角色大小；Spine 运行时的 `3.8.75` 版本校验已在 `libs/spine-webgl.js` 中注释，以兼容部分模型
 
-打包：在 AutoX.js 中导入工程目录，按 `project.json` 配置生成 APK，产物输出到 `build/`。
+打包：在 AutoX.js 中导入工程目录（导入功能可能不可用，手动放入脚本文件夹），按 `project.json` 配置生成 APK，产物输出到 `build/`。
 
 ## 已知限制
 
@@ -105,12 +106,6 @@
 ## 项目地址
 
 https://github.com/DYXDQ/arkpets-lite
-
-B 站：地月系地球
-你可以奖励我
-[投币](https://b23.tv/mCVXQ6E)
-
-te
 
 B 站：地月系地球
 你可以奖励我
